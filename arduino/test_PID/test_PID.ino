@@ -10,8 +10,8 @@ int Mot_L_EN = 4;
 int Mot_L_PH = 5;
 int Mot_R_EN = 3;
 int Mot_R_PH = 2;
-int Encode_L1 = 12;
-int Encode_L2 = 6;
+int Encode_L1 = 17;
+int Encode_L2 = 16;
 int Encode_R1 = 0;
 int Encode_R2 = 1;
 
@@ -58,10 +58,10 @@ unsigned int check_seconds = 0;
 void set_PWM(int motor, int value) {
   if (motor == left) {
     if (value < 0) {
-      digitalWrite(Mot_L_PH, HIGH);  // left backward
+      digitalWrite(Mot_L_PH, LOW);  // left backward
       analogWrite(Mot_L_EN, -value);
     } else {
-      digitalWrite(Mot_L_PH, LOW);  // left forward
+      digitalWrite(Mot_L_PH, HIGH);  // left forward
       analogWrite(Mot_L_EN, value);
     }
   } else {
@@ -78,7 +78,7 @@ void set_PWM(int motor, int value) {
 void setup() {
   analogWrite(Mot_L_EN, 0); // left speed pin
   pinMode(Mot_L_PH, OUTPUT);  // left direction pin
-  digitalWrite(Mot_L_PH, LOW);  // left forward
+  digitalWrite(Mot_L_PH, HIGH);  // left forward
   analogWrite(Mot_R_EN, 0); // right speed pin
   pinMode(Mot_R_PH, OUTPUT);  //right direction pin
   digitalWrite(Mot_R_PH, LOW);  // right forward

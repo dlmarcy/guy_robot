@@ -9,8 +9,8 @@ int Mot_L_EN = 4;
 int Mot_L_PH = 5;
 int Mot_R_EN = 3;
 int Mot_R_PH = 2;
-int Encode_L1 = 12;
-int Encode_L2 = 6;
+int Encode_L1 = 17;
+int Encode_L2 = 16;
 int Encode_R1 = 0;
 int Encode_R2 = 1;
 
@@ -28,7 +28,7 @@ int test_Duration = 1000;
 void setup() {
   analogWrite(Mot_L_EN, 0); // left speed pin
   pinMode(Mot_L_PH, OUTPUT);  // left direction pin
-  digitalWrite(Mot_L_PH, LOW);  // left forward
+  digitalWrite(Mot_L_PH, HIGH);  // left forward
   analogWrite(Mot_R_EN, 0); // right speed pin
   pinMode(Mot_R_PH, OUTPUT);  //right direction pin
   digitalWrite(Mot_R_PH, LOW);  // right forward
@@ -39,7 +39,7 @@ void setup() {
 void loop() {
   // Move the left wheel forward for 2 seconds
   Serial.println("Left wheel forward encoder values:");
-  digitalWrite(Mot_L_PH, LOW);  // left forward
+  digitalWrite(Mot_L_PH, HIGH);  // left forward
   analogWrite(Mot_L_EN, test_Speed); // left speed pin
   for(int i=0; i<10; i++) {
     delay(test_Duration);
@@ -51,7 +51,7 @@ void loop() {
   delay(2000);
   // Move the left wheel backward for 2 seconds
   Serial.println("Left wheel backward encoder values:");
-  digitalWrite(Mot_L_PH, HIGH);  // left backward
+  digitalWrite(Mot_L_PH, LOW);  // left backward
   analogWrite(Mot_L_EN, test_Speed); // left speed pin
   for(int i=0; i<10; i++) {
     delay(test_Duration);

@@ -4,8 +4,8 @@
 
 int LED_GRN1 = 14; // SOC LEDs
 int LED_RED1 = 15;
-int LED_GRN2 = 23; // Current LEDs
-int LED_RED2 = 22;
+int LED_GRN2 = 22; // Current LEDs
+int LED_RED2 = 23;
 int Teensy_LED = 13;
 int Push_But = 21;
 
