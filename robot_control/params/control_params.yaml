@@ -11,11 +11,11 @@ controller_manager:
 diff_drive_controller:
   ros__parameters:
     publish_rate: 10.0
-    left_wheel_names: ['motor_left_shaft']
-    right_wheel_names: ['motor_right_shaft']
+    left_wheel_names: ['gear_left_shaft']
+    right_wheel_names: ['gear_right_shaft']
     wheels_per_side: 1
-    wheel_separation: 0.25
-    wheel_radius: 0.04
+    wheel_separation: 0.385
+    wheel_radius: 0.075
     base_frame_id: base_footprint
     use_stamped_vel: false
     pose_covariance_diagonal: [0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.001]
