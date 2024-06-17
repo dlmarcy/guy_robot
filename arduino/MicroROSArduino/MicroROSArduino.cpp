@@ -85,7 +85,7 @@ void MicroROSArduino::beginRangeBroadcaster(void (*range_function)(rcl_timer_t*,
   if (rclc_timer_init_default(
     &range_timer,
     &support,
-    RCL_MS_TO_NS(1000),
+    RCL_MS_TO_NS(200),
     range_function) != RCL_RET_OK) {
     errorLoop();
   }
@@ -120,7 +120,7 @@ void MicroROSArduino::beginImuBroadcaster(void (*imu_function)(rcl_timer_t*, int
   if (rclc_timer_init_default(
     &imu_timer,
     &support,
-    RCL_MS_TO_NS(1000),
+    RCL_MS_TO_NS(50),
     imu_function) != RCL_RET_OK) {
     errorLoop();
   }
@@ -155,7 +155,7 @@ void MicroROSArduino::beginJointStateBroadcaster(void (*joint_state_function)(rc
   if (rclc_timer_init_default(
     &joint_state_timer,
     &support,
-    RCL_MS_TO_NS(1000),
+    RCL_MS_TO_NS(100),
     joint_state_function) != RCL_RET_OK) {
     errorLoop();
   }
@@ -167,37 +167,27 @@ void MicroROSArduino::beginJointStateBroadcaster(void (*joint_state_function)(rc
     errorLoop();
   }
   // initialize joint state msg data
-  #define ARRAY_LEN 4
-  String joint1 = "motor_left_shaft";
-  String joint2 = "motor_right_shaft";
-  String joint3 = "motor_shoulder_shaft";
-  String joint4 = "motor_elbow_shaft";
+  #define ARRAY_LEN 2
+  String joint1 = "gear_left_shaft";
+  String joint2 = "gear_right_shaft";
   rosidl_runtime_c__String__Sequence__init(&joint_state_msg.name, ARRAY_LEN);
   rosidl_runtime_c__String__assignn(&joint_state_msg.name.data[0], joint1.c_str(), joint1.length());
   rosidl_runtime_c__String__assignn(&joint_state_msg.name.data[1], joint2.c_str(), joint2.length());
-  rosidl_runtime_c__String__assignn(&joint_state_msg.name.data[2], joint3.c_str(), joint3.length());
-  rosidl_runtime_c__String__assignn(&joint_state_msg.name.data[3], joint4.c_str(), joint4.length());
   joint_state_msg.position.data = (double *) malloc(ARRAY_LEN * sizeof(double));
   joint_state_msg.position.size= ARRAY_LEN;
   joint_state_msg.position.capacity = ARRAY_LEN;
   joint_state_msg.position.data[0] = 1;
   joint_state_msg.position.data[1] = 2;
-  joint_state_msg.position.data[2] = 3;
-  joint_state_msg.position.data[3] = 4;
   joint_state_msg.velocity.data = (double *) malloc(ARRAY_LEN * sizeof(double));
   joint_state_msg.velocity.size = ARRAY_LEN;
   joint_state_msg.velocity.capacity = ARRAY_LEN;
   joint_state_msg.velocity.data[0] = 10;
   joint_state_msg.velocity.data[1] = 20;
-  joint_state_msg.velocity.data[2] = 30;
-  joint_state_msg.velocity.data[3] = 40;
   joint_state_msg.effort.data = (double *) malloc(ARRAY_LEN * sizeof(double));
   joint_state_msg.effort.size = ARRAY_LEN;
   joint_state_msg.effort.capacity = ARRAY_LEN;
   joint_state_msg.effort.data[0] = 100;
   joint_state_msg.effort.data[1] = 200;
-  joint_state_msg.effort.data[2] = 300;
-  joint_state_msg.effort.data[3] = 400;
   joint_state = true;
 }
 
@@ -224,16 +214,12 @@ void MicroROSArduino::beginJointStateCommander(void (*command_function)(const vo
     errorLoop();
   }
   // initialize js cmd data
-  #define NUM_JOINTS 4
-  String joint1 = "motor_left_shaft";
-  String joint2 = "motor_right_shaft";
-  String joint3 = "motor_shoulder_shaft";
-  String joint4 = "motor_elbow_shaft";
+  #define NUM_JOINTS 2
+  String joint1 = "gear_left_shaft";
+  String joint2 = "gear_right_shaft";
   rosidl_runtime_c__String__Sequence__init(&command_msg.name, NUM_JOINTS);
   rosidl_runtime_c__String__assignn(&command_msg.name.data[0], joint1.c_str(), joint1.length());
   rosidl_runtime_c__String__assignn(&command_msg.name.data[1], joint2.c_str(), joint2.length());
-  rosidl_runtime_c__String__assignn(&command_msg.name.data[2], joint3.c_str(), joint3.length());
-  rosidl_runtime_c__String__assignn(&command_msg.name.data[3], joint4.c_str(), joint4.length());
   command_msg.position.data = (double *) malloc(NUM_JOINTS * sizeof(double));
   command_msg.position.size= NUM_JOINTS;
   command_msg.position.capacity = NUM_JOINTS;

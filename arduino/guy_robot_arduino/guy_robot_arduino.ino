@@ -99,6 +99,7 @@ void joint_state_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   micro_ros.joint_state_msg.position.data[1] = scale_steps_pos*encoder_r;
   micro_ros.joint_state_msg.velocity.data[1] = input_r;
   micro_ros.publishJointState();
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  
 }
 
 void commander_cb(const void * msgin)
@@ -136,6 +137,10 @@ void setup() {
   // object.Start(input, current output, setpoint);
   control_left.Start(0, 0, 0);
   control_right.Start(0, 0, 0);
+
+  control_left.Setpoint(3.0);
+  control_right.Setpoint(-6.5);
+
 }
 
 void loop() {
