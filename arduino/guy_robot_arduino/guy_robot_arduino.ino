@@ -114,10 +114,13 @@ void setup() {
   Wire.begin();
 
   // setup micro ros
-  micro_ros.beginBatteryBroadcaster(&battery_timer_cb);
-  micro_ros.beginImuBroadcaster(&imu_timer_cb);
-  micro_ros.beginJointStateBroadcaster(&joint_state_timer_cb);
-  micro_ros.beginJointStateCommander(&commander_cb);
+  micro_ros.beginBatteryBroadcaster(&battery_timer_cb, "battery", 1.0);
+  micro_ros.beginImuBroadcaster(&imu_timer_cb, "imu", 20.0);
+  String JointNames[2];
+  JointNames[0] = "gear_left_motor";
+  JointNames[1] = "gear_right_motor";
+  micro_ros.beginJointStateBroadcaster(&joint_state_timer_cb, "joint_states", 10.0, 2, JointNames);
+  micro_ros.beginJointStateCommander(&commander_cb, "commands", 2, JointNames);
 
   // setup battery
   power_monitor.begin();
