@@ -4,6 +4,7 @@
 #include <Encoder.h>
 #include <PID_v2.h>
 #include <Adafruit_INA219.h>
+#include <Adafruit_BNO055.h>
 
 // define pin numbers
 int Mot_L_EN = 4;
@@ -21,6 +22,7 @@ int right = 2;
 // define objects
 MicroROSArduino micro_ros;
 Adafruit_INA219 power_monitor;
+Adafruit_BNO055 imu_sensor = Adafruit_BNO055(55);  
 Encoder encoder_left(Encode_L2, Encode_L1); 
 Encoder encoder_right(Encode_R1, Encode_R2); 
 // default sample time for the PID controller is 100ms
@@ -33,6 +35,13 @@ PID_v2 control_right(Kp, Ki, Kd, PID::Direct);
 // battery variables
 float battery_voltage = 0;
 float battery_current = 0;
+
+// imu variables
+uint8_t system_cal, gyro_cal, accel_cal, mag_cal = 0;
+imu::Quaternion quat;
+imu::Vector<3> gyro;
+imu::Vector<3> accel;
+imu::Vector<3> magnet;
 
 // controller variables
 long encoder_l = 0;
@@ -74,16 +83,28 @@ void set_PWM(int motor, int value) {
 }
 
 void battery_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
-  battery_voltage = power_monitor.getBusVoltage_V() + (power_monitor.getShuntVoltage_mV() / 1000);
-  battery_current = -1000*power_monitor.getCurrent_mA();
+  battery_voltage = power_monitor.getBusVoltage_V() + (power_monitor.getShuntVoltage_mV()/1000.0);
+  battery_current = power_monitor.getCurrent_mA()/-1000.0;
   micro_ros.battery_msg.voltage = battery_voltage;
-  micro_ros.battery_msg.voltage = battery_current;
+  micro_ros.battery_msg.current = battery_current;
   micro_ros.publishBattery();
 }
 
 void imu_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
-  micro_ros.imu_msg.orientation.w = 0.707;
-  micro_ros.imu_msg.orientation.z = 0.707;
+  imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
+  quat = imu_sensor.getQuat();
+  gyro = imu_sensor.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+  accel = imu_sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+  micro_ros.imu_msg.orientation.w = quat.w();
+  micro_ros.imu_msg.orientation.x = quat.x();
+  micro_ros.imu_msg.orientation.y = quat.y();
+  micro_ros.imu_msg.orientation.z = quat.z();
+  micro_ros.imu_msg.angular_velocity.x = gyro.x();
+  micro_ros.imu_msg.angular_velocity.y = gyro.y();
+  micro_ros.imu_msg.angular_velocity.z = gyro.z();
+  micro_ros.imu_msg.linear_acceleration.x = accel.x();
+  micro_ros.imu_msg.linear_acceleration.y = accel.y();
+  micro_ros.imu_msg.linear_acceleration.z = accel.z();
   micro_ros.publishImu();
 }
 
@@ -99,7 +120,6 @@ void joint_state_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   micro_ros.joint_state_msg.position.data[1] = scale_steps_pos*encoder_r;
   micro_ros.joint_state_msg.velocity.data[1] = input_r;
   micro_ros.publishJointState();
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  
 }
 
 void commander_cb(const void * msgin)
@@ -112,18 +132,38 @@ void commander_cb(const void * msgin)
 
 void setup() {
   Wire.begin();
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // setup micro ros
   micro_ros.beginBatteryBroadcaster(&battery_timer_cb, "battery", 1.0);
   micro_ros.beginImuBroadcaster(&imu_timer_cb, "imu", 20.0);
   String JointNames[2];
-  JointNames[0] = "gear_left_motor";
-  JointNames[1] = "gear_right_motor";
+  JointNames[0] = "gear_left_shaft";
+  JointNames[1] = "gear_right_shaft";
   micro_ros.beginJointStateBroadcaster(&joint_state_timer_cb, "joint_states", 10.0, 2, JointNames);
   micro_ros.beginJointStateCommander(&commander_cb, "commands", 2, JointNames);
 
   // setup battery
+  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg.header.frame_id, "battery", 7);
+  micro_ros.battery_msg.design_capacity = 7.0;
+  micro_ros.battery_msg.power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+  micro_ros.battery_msg.present = true;
   power_monitor.begin();
+
+  // setup imu
+  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg.header.frame_id, "imu", 3);
+  micro_ros.imu_msg.orientation_covariance[0] = 1.0;
+  micro_ros.imu_msg.orientation_covariance[4] = 1.0;
+  micro_ros.imu_msg.orientation_covariance[8] = 1.0;
+  micro_ros.imu_msg.angular_velocity_covariance[0] = 1.0;
+  micro_ros.imu_msg.angular_velocity_covariance[4] = 1.0;
+  micro_ros.imu_msg.angular_velocity_covariance[8] = 1.0;
+  micro_ros.imu_msg.linear_acceleration_covariance[0] = 1.0;
+  micro_ros.imu_msg.linear_acceleration_covariance[4] = 1.0;
+  micro_ros.imu_msg.linear_acceleration_covariance[8] = 1.0;
+  imu_sensor.begin(); 
+  delay(100);  // Example sketch used a delay here
+  imu_sensor.setExtCrystalUse(true);
 
   // setup motors and controllers
   analogWrite(Mot_L_EN, 0); // left speed pin
@@ -140,10 +180,6 @@ void setup() {
   // object.Start(input, current output, setpoint);
   control_left.Start(0, 0, 0);
   control_right.Start(0, 0, 0);
-
-  control_left.Setpoint(3.0);
-  control_right.Setpoint(-6.5);
-
 }
 
 void loop() {
