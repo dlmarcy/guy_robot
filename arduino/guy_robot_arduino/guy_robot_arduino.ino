@@ -88,6 +88,7 @@ void battery_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   micro_ros.battery_msg.voltage = battery_voltage;
   micro_ros.battery_msg.current = battery_current;
   micro_ros.publishBattery();
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  
 }
 
 void imu_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
@@ -133,9 +134,13 @@ void commander_cb(const void * msgin)
 void setup() {
   Wire.begin();
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(14, OUTPUT);
+  pinMode(15, OUTPUT);
+  pinMode(22, OUTPUT);
+  pinMode(23, OUTPUT);
 
   // setup micro ros
-  micro_ros.beginBatteryBroadcaster(&battery_timer_cb, "battery", 1.0);
+  micro_ros.beginBatteryBroadcaster(&battery_timer_cb, "battery", 10.0);
   micro_ros.beginImuBroadcaster(&imu_timer_cb, "imu", 20.0);
   String JointNames[2];
   JointNames[0] = "gear_left_shaft";
