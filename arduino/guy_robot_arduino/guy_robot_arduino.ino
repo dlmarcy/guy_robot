@@ -33,10 +33,20 @@ PID_v2 control_left(Kp, Ki, Kd, PID::Direct);
 PID_v2 control_right(Kp, Ki, Kd, PID::Direct);
 
 // battery variables
+uint8_t battery_id;
+uint8_t battery_msg_id;
 float battery_voltage = 0;
 float battery_current = 0;
 
+// battery2 variables
+uint8_t battery2_id;
+uint8_t battery2_msg_id;
+float battery2_voltage = 0;
+float battery2_current = 0;
+
 // imu variables
+uint8_t imu_id;
+uint8_t imu_msg_id;
 uint8_t system_cal, gyro_cal, accel_cal, mag_cal = 0;
 imu::Quaternion quat;
 imu::Vector<3> gyro;
@@ -44,6 +54,7 @@ imu::Vector<3> accel;
 imu::Vector<3> magnet;
 
 // controller variables
+uint8_t joint_states_id; 
 long encoder_l = 0;
 long encoder_r = 0;
 long previous_l = 0;
@@ -85,10 +96,20 @@ void set_PWM(int motor, int value) {
 void battery_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   battery_voltage = power_monitor.getBusVoltage_V() + (power_monitor.getShuntVoltage_mV()/1000.0);
   battery_current = power_monitor.getCurrent_mA()/-1000.0;
-  micro_ros.battery_msg.voltage = battery_voltage;
-  micro_ros.battery_msg.current = battery_current;
-  micro_ros.publishBattery();
+  micro_ros.battery_msg[battery_msg_id].voltage = battery_voltage;
+  micro_ros.battery_msg[battery_msg_id].current = battery_current;
+
+  micro_ros.publishBroadcaster(battery_id);
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  
+}
+void battery2_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
+  //battery_voltage = power_monitor.getBusVoltage_V() + (power_monitor.getShuntVoltage_mV()/1000.0);
+  //battery_current = power_monitor.getCurrent_mA()/-1000.0;
+  micro_ros.battery_msg[battery2_msg_id].voltage = 23.0;
+  micro_ros.battery_msg[battery2_msg_id].current = 37.4;
+
+  micro_ros.publishBroadcaster(battery2_id);
+  //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  
 }
 
 void imu_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
@@ -96,17 +117,18 @@ void imu_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   quat = imu_sensor.getQuat();
   gyro = imu_sensor.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
   accel = imu_sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-  micro_ros.imu_msg.orientation.w = quat.w();
-  micro_ros.imu_msg.orientation.x = quat.x();
-  micro_ros.imu_msg.orientation.y = quat.y();
-  micro_ros.imu_msg.orientation.z = quat.z();
-  micro_ros.imu_msg.angular_velocity.x = gyro.x();
-  micro_ros.imu_msg.angular_velocity.y = gyro.y();
-  micro_ros.imu_msg.angular_velocity.z = gyro.z();
-  micro_ros.imu_msg.linear_acceleration.x = accel.x();
-  micro_ros.imu_msg.linear_acceleration.y = accel.y();
-  micro_ros.imu_msg.linear_acceleration.z = accel.z();
-  micro_ros.publishImu();
+  micro_ros.imu_msg[imu_msg_id].orientation.w = quat.w();
+  micro_ros.imu_msg[imu_msg_id].orientation.x = quat.x();
+  micro_ros.imu_msg[imu_msg_id].orientation.y = quat.y();
+  micro_ros.imu_msg[imu_msg_id].orientation.z = quat.z();
+  micro_ros.imu_msg[imu_msg_id].angular_velocity.x = gyro.x();
+  micro_ros.imu_msg[imu_msg_id].angular_velocity.y = gyro.y();
+  micro_ros.imu_msg[imu_msg_id].angular_velocity.z = gyro.z();
+  micro_ros.imu_msg[imu_msg_id].linear_acceleration.x = accel.x();
+  micro_ros.imu_msg[imu_msg_id].linear_acceleration.y = accel.y();
+  micro_ros.imu_msg[imu_msg_id].linear_acceleration.z = accel.z();
+
+  micro_ros.publishBroadcaster(imu_id);
 }
 
 void joint_state_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
@@ -120,7 +142,7 @@ void joint_state_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   micro_ros.joint_state_msg.velocity.data[0] = input_l;
   micro_ros.joint_state_msg.position.data[1] = scale_steps_pos*encoder_r;
   micro_ros.joint_state_msg.velocity.data[1] = input_r;
-  micro_ros.publishJointState();
+  micro_ros.publishBroadcaster(joint_states_id);
 }
 
 void commander_cb(const void * msgin)
@@ -140,33 +162,47 @@ void setup() {
   pinMode(23, OUTPUT);
 
   // setup micro ros
-  micro_ros.beginBatteryBroadcaster(&battery_timer_cb, "battery", 10.0);
-  micro_ros.beginImuBroadcaster(&imu_timer_cb, "imu", 20.0);
+
+  // setup battery
+  battery_id = micro_ros.beginBroadcaster(MicroROSArduino::eeBattery, "battery", 10.0, &battery_timer_cb);
+  battery_msg_id = micro_ros.getMessageIndex(battery_id);
+  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg[battery_msg_id].header.frame_id, "battery", 7);
+  micro_ros.battery_msg[battery_msg_id].design_capacity = 7.0;
+  micro_ros.battery_msg[battery_msg_id].power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+  micro_ros.battery_msg[battery_msg_id].present = true;
+  power_monitor.begin();
+
+  // setup battery2
+  battery2_id = micro_ros.beginBroadcaster(MicroROSArduino::eeBattery, "battery2", 10.0, &battery2_timer_cb);
+  battery2_msg_id = micro_ros.getMessageIndex(battery2_id);
+  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg[battery2_msg_id].header.frame_id, "battery2", 8);
+  micro_ros.battery_msg[battery2_msg_id].design_capacity = 7.0;
+  micro_ros.battery_msg[battery2_msg_id].power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+  micro_ros.battery_msg[battery2_msg_id].present = true;
+  //power_monitor.begin();
+
+  // setup imu
+  imu_id = micro_ros.beginBroadcaster(MicroROSArduino::eeIMU, "imu", 20.0, &imu_timer_cb);
+  imu_msg_id = micro_ros.getMessageIndex(imu_id);
+  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg[0].header.frame_id, "imu", 3);
+  micro_ros.imu_msg[imu_msg_id].orientation_covariance[0] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].orientation_covariance[4] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].orientation_covariance[8] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].angular_velocity_covariance[0] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].angular_velocity_covariance[4] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].angular_velocity_covariance[8] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].linear_acceleration_covariance[0] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].linear_acceleration_covariance[4] = 1.0;
+  micro_ros.imu_msg[imu_msg_id].linear_acceleration_covariance[8] = 1.0;
+  imu_sensor.begin(); 
+
+  //setup joint state
   String JointNames[2];
   JointNames[0] = "gear_left_shaft";
   JointNames[1] = "gear_right_shaft";
-  micro_ros.beginJointStateBroadcaster(&joint_state_timer_cb, "joint_states", 10.0, 2, JointNames);
+  joint_states_id = micro_ros.beginBroadcaster(MicroROSArduino::eeJointState, "joint_states", 10.0, &joint_state_timer_cb, 2, JointNames);
   micro_ros.beginJointStateCommander(&commander_cb, "commands", 2, JointNames);
 
-  // setup battery
-  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg.header.frame_id, "battery", 7);
-  micro_ros.battery_msg.design_capacity = 7.0;
-  micro_ros.battery_msg.power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
-  micro_ros.battery_msg.present = true;
-  power_monitor.begin();
-
-  // setup imu
-  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg.header.frame_id, "imu", 3);
-  micro_ros.imu_msg.orientation_covariance[0] = 1.0;
-  micro_ros.imu_msg.orientation_covariance[4] = 1.0;
-  micro_ros.imu_msg.orientation_covariance[8] = 1.0;
-  micro_ros.imu_msg.angular_velocity_covariance[0] = 1.0;
-  micro_ros.imu_msg.angular_velocity_covariance[4] = 1.0;
-  micro_ros.imu_msg.angular_velocity_covariance[8] = 1.0;
-  micro_ros.imu_msg.linear_acceleration_covariance[0] = 1.0;
-  micro_ros.imu_msg.linear_acceleration_covariance[4] = 1.0;
-  micro_ros.imu_msg.linear_acceleration_covariance[8] = 1.0;
-  imu_sensor.begin(); 
   delay(100);  // Example sketch used a delay here
   imu_sensor.setExtCrystalUse(true);
 
