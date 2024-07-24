@@ -174,7 +174,7 @@ def main(args=None):
 		simulator = Teensy_Sim()
 
 		# print('Starting Teensy simulation node')
-		get_logger().info('Starting Teensy simulation node')
+		simulator.get_logger().info('Starting Teensy simulation node')
 
 		rclpy.spin(simulator)
 	
@@ -188,7 +188,7 @@ def main(args=None):
 	# (optional - otherwise it will be done automatically
 	# when the garbage collector destroys the node object)
 	simulator.destroy_node()
-	rclpy.shutdown()
+	#rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
