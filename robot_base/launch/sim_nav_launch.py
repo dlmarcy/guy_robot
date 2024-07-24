@@ -6,16 +6,19 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 def generate_launch_description():
+	control_launch = os.path.join(get_package_share_directory('robot_control'), 'launch', 'sim_control_launch.py')
 	ekf_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'ekf_launch.py')
 	map_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'map_server_launch.py')
 	nav_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'navigation_launch.py')
 	rviz2_file = os.path.join(get_package_share_directory('robot_base'), 'rviz', 'robot.rviz')
 	
+	control_include = IncludeLaunchDescription(PythonLaunchDescriptionSource(control_launch))
 	ekf_include = IncludeLaunchDescription(PythonLaunchDescriptionSource(ekf_launch))
 	map_include = IncludeLaunchDescription(PythonLaunchDescriptionSource(map_launch))
 	nav_include = IncludeLaunchDescription(PythonLaunchDescriptionSource(nav_launch))
 
 	return LaunchDescription([
+		control_include,
 		ekf_include,
 		map_include,
 		nav_include,
@@ -31,4 +34,3 @@ def generate_launch_description():
 			name = 'rqt_gui',
 		)
 	])
-
