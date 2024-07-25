@@ -90,6 +90,10 @@ const float scale_counts_vel = scale_counts_pos*0.1;
 const float scale_radians_vel = 1.0/scale_counts_vel;
 const float scale_deg_rad = 3.1415926536/180.0;
 
+// define push button timing variables
+unsigned long start_time;
+unsigned long delta_time;
+
 void battery_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   micro_ros.battery_msg[battery_id].voltage = power_monitor.getBusVoltage_V() + (power_monitor.getShuntVoltage_mV()/1000.0);
   micro_ros.battery_msg[battery_id].current = power_monitor.getCurrent_mA()/-1000.0;
@@ -245,4 +249,32 @@ void loop() {
   set_PWM(LEFT, output_l);
   output_r = control_right.Run(input_r);
   set_PWM(RIGHT, output_r);
+
+  // check if push button is pressed or not
+  if (digitalRead(Push_But) == LOW) {  // push button not pressed
+    delta_time = millis() - start_time;  // timer is not reset while push button is pressed
+    if (delta_time < 500) {  
+      // press time too short not counted
+      start_time = millis();  // reset timer
+    } else if (delta_time < 3000) {  
+      // short press between 0.5 and 3 seconds
+      encoder_left.write(0);
+      encoder_right.write(0);
+      start_time = millis();  // reset timer
+    } else {
+      // long press greater than 5 seconds
+      imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
+      if (system_cal==3 && gyro_cal==3 && accel_cal==3 && mag_cal==3) {
+        imu_sensor.getSensorOffsets(calibrationData);
+        eeAddress = 0;
+        imu_sensor.getSensor(&sensor);
+        bnoID = sensor.sensor_id;
+        EEPROM.put(eeAddress, bnoID);
+        eeAddress += sizeof(long);
+        EEPROM.put(eeAddress, calibrationData);
+      }
+      start_time = millis();  // reset timer
+    }
+  }
+
 }
