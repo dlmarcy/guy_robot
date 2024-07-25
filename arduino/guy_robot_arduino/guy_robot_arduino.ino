@@ -179,7 +179,7 @@ void setup() {
 
   // set up power monitor
   battery_id = micro_ros.beginBroadcaster(MicroROSArduino::BATTERY, "battery", 1.0, &battery_timer_cb);
-  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg[battery_id].header.frame_id, "battery", 7);
+  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg[battery_id].header.frame_id, "bat_lead", 8);
   micro_ros.battery_msg[battery_id].present = true;
   micro_ros.battery_msg[battery_id].power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_LIFE;
   micro_ros.battery_msg[battery_id].power_supply_health = sensor_msgs__msg__BatteryState__POWER_SUPPLY_HEALTH_GOOD;
@@ -188,7 +188,7 @@ void setup() {
 
   // set up IMU
   imu_id = micro_ros.beginBroadcaster(MicroROSArduino::IMU, "imu", 20.0, &imu_timer_cb);
-  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg[imu_id].header.frame_id, "imu", 3);
+  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg[imu_id].header.frame_id, "imu_link", 8);
   micro_ros.imu_msg[imu_id].orientation_covariance[0] = 0.01;
   micro_ros.imu_msg[imu_id].orientation_covariance[4] = 0.01;
   micro_ros.imu_msg[imu_id].orientation_covariance[8] = 0.01;
