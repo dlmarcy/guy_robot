@@ -90,6 +90,10 @@ const float scale_counts_vel = scale_counts_pos*0.1;
 const float scale_radians_vel = 1.0/scale_counts_vel;
 const float scale_deg_rad = 3.1415926536/180.0;
 
+// define push button timing variables
+unsigned long start_time;
+unsigned long delta_time;
+
 void battery_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   micro_ros.battery_msg[battery_id].voltage = power_monitor.getBusVoltage_V() + (power_monitor.getShuntVoltage_mV()/1000.0);
   micro_ros.battery_msg[battery_id].current = power_monitor.getCurrent_mA()/-1000.0;
@@ -179,7 +183,7 @@ void setup() {
 
   // set up power monitor
   battery_id = micro_ros.beginBroadcaster(MicroROSArduino::BATTERY, "battery", 1.0, &battery_timer_cb);
-  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg[battery_id].header.frame_id, "battery", 7);
+  rosidl_runtime_c__String__assignn(&micro_ros.battery_msg[battery_id].header.frame_id, "bat_lead", 8);
   micro_ros.battery_msg[battery_id].present = true;
   micro_ros.battery_msg[battery_id].power_supply_technology = sensor_msgs__msg__BatteryState__POWER_SUPPLY_TECHNOLOGY_LIFE;
   micro_ros.battery_msg[battery_id].power_supply_health = sensor_msgs__msg__BatteryState__POWER_SUPPLY_HEALTH_GOOD;
@@ -188,7 +192,7 @@ void setup() {
 
   // set up IMU
   imu_id = micro_ros.beginBroadcaster(MicroROSArduino::IMU, "imu", 20.0, &imu_timer_cb);
-  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg[imu_id].header.frame_id, "imu", 3);
+  rosidl_runtime_c__String__assignn(&micro_ros.imu_msg[imu_id].header.frame_id, "imu_link", 8);
   micro_ros.imu_msg[imu_id].orientation_covariance[0] = 0.01;
   micro_ros.imu_msg[imu_id].orientation_covariance[4] = 0.01;
   micro_ros.imu_msg[imu_id].orientation_covariance[8] = 0.01;
@@ -245,4 +249,32 @@ void loop() {
   set_PWM(LEFT, output_l);
   output_r = control_right.Run(input_r);
   set_PWM(RIGHT, output_r);
+
+  // check if push button is pressed or not
+  if (digitalRead(Push_But) == LOW) {  // push button not pressed
+    delta_time = millis() - start_time;  // timer is not reset while push button is pressed
+    if (delta_time < 500) {  
+      // press time too short not counted
+      start_time = millis();  // reset timer
+    } else if (delta_time < 3000) {  
+      // short press between 0.5 and 3 seconds
+      encoder_left.write(0);
+      encoder_right.write(0);
+      start_time = millis();  // reset timer
+    } else {
+      // long press greater than 5 seconds
+      imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
+      if (system_cal==3 && gyro_cal==3 && accel_cal==3 && mag_cal==3) {
+        imu_sensor.getSensorOffsets(calibrationData);
+        eeAddress = 0;
+        imu_sensor.getSensor(&sensor);
+        bnoID = sensor.sensor_id;
+        EEPROM.put(eeAddress, bnoID);
+        eeAddress += sizeof(long);
+        EEPROM.put(eeAddress, calibrationData);
+      }
+      start_time = millis();  // reset timer
+    }
+  }
+
 }
