@@ -35,12 +35,12 @@ class Teensy_Sim(Node):
 
 		# motor model and velocity setpoints
 		self.a0 = 0
-		self.a1 = 0.02011635
-		self.a2 = 0.00778797
-		self.a3 = -0.00152871
+		self.a1 = 0.01170024
+		self.a2 = -0.0067191
+		self.a3 = -0.00234201
 		self.b0 = 1
-		self.b1 = -1.76702356
-		self.b2 = 0.79972469
+		self.b1 = -1.78637763
+		self.b2 = 0.79534228
 		self.b3 = -0.00632552
 		self.setpoint_left = 0.0
 		self.setpoint_left_k1 = 0.0
