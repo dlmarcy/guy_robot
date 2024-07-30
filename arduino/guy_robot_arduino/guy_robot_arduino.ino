@@ -102,29 +102,33 @@ void battery_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
 
 void imu_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
   imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
-  if (gyro_cal==3 && accel_cal==3 && mag_cal==3) {
-    if (system_cal==3) {
-      analogWrite(LED_GRN2, 255); analogWrite(LED_RED2, 0);
+  if (gyro_cal==3 && accel_cal==3) {  // publish if gyro and accel are calibrated
+    quat = imu_sensor.getQuat();
+    gyro = imu_sensor.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+    accel = imu_sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    micro_ros.imu_msg[imu_id].orientation.w = quat.w();
+    micro_ros.imu_msg[imu_id].orientation.x = quat.x();
+    micro_ros.imu_msg[imu_id].orientation.y = quat.y();
+    micro_ros.imu_msg[imu_id].orientation.z = quat.z();
+    micro_ros.imu_msg[imu_id].angular_velocity.x = scale_deg_rad*gyro.x();
+    micro_ros.imu_msg[imu_id].angular_velocity.y = scale_deg_rad*gyro.y();
+    micro_ros.imu_msg[imu_id].angular_velocity.z = scale_deg_rad*gyro.z();
+    micro_ros.imu_msg[imu_id].linear_acceleration.x = accel.x();
+    micro_ros.imu_msg[imu_id].linear_acceleration.y = accel.y();
+    micro_ros.imu_msg[imu_id].linear_acceleration.z = accel.z();
+    micro_ros.publishImu(imu_id);
+    if (mag_cal==3) { 
+      if (system_cal==3) {
+        analogWrite(LED_GRN2, 255); analogWrite(LED_RED2, 0); // all calibrated
+      } else {
+        analogWrite(LED_GRN2, 210); analogWrite(LED_RED2, 45); // everything but system
+      }
     } else {
-      analogWrite(LED_GRN2, 190); analogWrite(LED_RED2, 65);
+      analogWrite(LED_GRN2, 45); analogWrite(LED_RED2, 210); // only gyro and accel calib
     }
   } else {
-    analogWrite(LED_GRN2, 0); analogWrite(LED_RED2, 255);
+    analogWrite(LED_GRN2, 0); analogWrite(LED_RED2, 255); // not enough calibration
   }
-  quat = imu_sensor.getQuat();
-  gyro = imu_sensor.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
-  accel = imu_sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-  micro_ros.imu_msg[imu_id].orientation.w = quat.w();
-  micro_ros.imu_msg[imu_id].orientation.x = quat.x();
-  micro_ros.imu_msg[imu_id].orientation.y = quat.y();
-  micro_ros.imu_msg[imu_id].orientation.z = quat.z();
-  micro_ros.imu_msg[imu_id].angular_velocity.x = scale_deg_rad*gyro.x();
-  micro_ros.imu_msg[imu_id].angular_velocity.y = scale_deg_rad*gyro.y();
-  micro_ros.imu_msg[imu_id].angular_velocity.z = scale_deg_rad*gyro.z();
-  micro_ros.imu_msg[imu_id].linear_acceleration.x = accel.x();
-  micro_ros.imu_msg[imu_id].linear_acceleration.y = accel.y();
-  micro_ros.imu_msg[imu_id].linear_acceleration.z = accel.z();
-  micro_ros.publishImu(imu_id);
 }
 
 void joint_state_timer_cb(rcl_timer_t * timer, int64_t last_call_time) {
@@ -251,20 +255,18 @@ void loop() {
   set_PWM(RIGHT, output_r);
 
   // check if push button is pressed or not
-  if (digitalRead(Push_But) == LOW) {  // push button not pressed
-    delta_time = millis() - start_time;  // timer is not reset while push button is pressed
-    if (delta_time < 500) {  
-      // press time too short not counted
-      start_time = millis();  // reset timer
-    } else if (delta_time < 3000) {  
+  if (digitalRead(Push_But) == LOW) {  // enter if when push button NOT pressed
+    delta_time = millis() - start_time;  // time button held down
+    if ((delta_time > 500) && (delta_time <= 3000)) {  
       // short press between 0.5 and 3 seconds
       encoder_left.write(0);
       encoder_right.write(0);
-      start_time = millis();  // reset timer
-    } else {
-      // long press greater than 5 seconds
+    } else if (delta_time > 3000) {  
+      // long press greater than 3 seconds
       imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
       if (system_cal==3 && gyro_cal==3 && accel_cal==3 && mag_cal==3) {
+        analogWrite(LED_GRN2, 0); analogWrite(LED_RED2, 0);  // LED goes off when update happens
+        // getSensorOffsets only works when all cal are 3
         imu_sensor.getSensorOffsets(calibrationData);
         eeAddress = 0;
         imu_sensor.getSensor(&sensor);
@@ -273,8 +275,8 @@ void loop() {
         eeAddress += sizeof(long);
         EEPROM.put(eeAddress, calibrationData);
       }
-      start_time = millis();  // reset timer
     }
+    start_time = millis();  // reset timer skipped when push button IS pressed
   }
 
 }

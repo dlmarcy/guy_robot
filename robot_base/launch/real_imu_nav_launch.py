@@ -7,7 +7,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 	control_launch = os.path.join(get_package_share_directory('robot_control'), 'launch', 'real_control_launch.py')
-	ekf_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'ekf_launch.py')
+	ekf_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'ekf_imu_launch.py')
 	map_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'map_server_launch.py')
 	nav_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'navigation_launch.py')
 	rviz2_file = os.path.join(get_package_share_directory('robot_base'), 'rviz', 'robot.rviz')

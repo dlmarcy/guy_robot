@@ -5,6 +5,10 @@
 #include <Adafruit_BNO055.h>
 #include <EEPROM.h>
 
+const int LED_GRN2 = 22; // Current LEDs
+const int LED_RED2 = 23;
+const int Push_But = 21;
+
 int eeAddress = 0;
 long bnoID;
 bool foundCalib = false;
@@ -20,6 +24,7 @@ Adafruit_BNO055 imu_sensor = Adafruit_BNO055(55);
 
 void setup() {
   Wire.begin();
+  pinMode(Push_But, INPUT_PULLDOWN); // Pushbutton
   imu_sensor.begin(); 
   EEPROM.get(eeAddress, bnoID); // Check for calibration data in Teensy's EEPROM
   imu_sensor.getSensor(&sensor);  // Get the BNO sensor ID and compare to that stored in the EEPROM (check if same sensor)
@@ -84,4 +89,41 @@ void loop() {
   Serial.println(magnet.z());
   Serial.println();
   delay(2000);
+
+  imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
+  if (gyro_cal==3 && accel_cal==3) {  // publish if gyro and accel are calibrated
+    quat = imu_sensor.getQuat();
+    gyro = imu_sensor.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+    accel = imu_sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    if (mag_cal==3) { 
+      if (system_cal==3) {
+        analogWrite(LED_GRN2, 255); analogWrite(LED_RED2, 0); // all calibrated
+      } else {
+        analogWrite(LED_GRN2, 210); analogWrite(LED_RED2, 45); // everything but system
+      }
+    } else {
+      analogWrite(LED_GRN2, 127); analogWrite(LED_RED2, 128); // only gyro and accel calib
+    }
+  } else {
+    analogWrite(LED_GRN2, 0); analogWrite(LED_RED2, 255); // not enough calibration
+  }
+  delay(1000);
+
+  // check if push button is pressed or not
+  if (digitalRead(Push_But) == HIGH) {  
+    imu_sensor.getCalibration(&system_cal, &gyro_cal, &accel_cal, &mag_cal);
+    if (system_cal==3 && gyro_cal==3 && accel_cal==3 && mag_cal==3) {
+      analogWrite(LED_GRN2, 0); analogWrite(LED_RED2, 0);
+      // getSensorOffsets only works when all cal are 3
+      imu_sensor.getSensorOffsets(calibrationData);
+      eeAddress = 0;
+      imu_sensor.getSensor(&sensor);
+      bnoID = sensor.sensor_id;
+      EEPROM.put(eeAddress, bnoID);
+      eeAddress += sizeof(long);
+      EEPROM.put(eeAddress, calibrationData);
+    }
+  }
+  delay(1000);
+
 }
