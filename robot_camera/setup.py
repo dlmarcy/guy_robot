@@ -23,6 +23,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'static_tag_broadcaster = robot_camera.static_tag_broadcaster:main',
         ],
     },
 )
