@@ -4,7 +4,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-	apriltag_params = os.path.join(get_package_share_directory('apriltag_ros'), 'cfg', 'tags_36h11.yaml')
+	apriltag_params = os.path.join(get_package_share_directory('robot_camera'), 'params', 'apriltag_params.yaml')
 
 	return LaunchDescription([
 		Node(

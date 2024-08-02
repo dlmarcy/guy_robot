@@ -265,7 +265,7 @@
         </visual>
     </link>
 
-    <link name="camera_link">
+    <link name="camera">
         <visual>
             <geometry>
                 <sphere radius="0.025"/>
@@ -418,9 +418,9 @@
     </joint>
 
     <joint name="post_camera" type="fixed">
-        <origin rpy="0 0 0" xyz="0 0 0.031"/>
+        <origin rpy="-1.570796327 0 -1.570796327" xyz="0 0 0.031"/>
         <parent link="camera_post"/>
-        <child link="camera_link"/>
+        <child link="camera"/>
     </joint>
 
 <!--   ROS2 Control tags   -->
