@@ -11,6 +11,7 @@ class StaticFramePublisher(Node):
         self.tf_static_broadcaster = StaticTransformBroadcaster(self)
 
     def make_transform_frames(self, tags):
+        trans = []
         for tag in tags:
             t = TransformStamped()
             
@@ -26,7 +27,9 @@ class StaticFramePublisher(Node):
             t.transform.rotation.y = tag[6]
             t.transform.rotation.z = tag[7]
             
-            self.tf_static_broadcaster.sendTransform(t)
+            trans.append(t)
+            
+        self.tf_static_broadcaster.sendTransform(trans)
 
 def main():
 

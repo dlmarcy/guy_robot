@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'static_tag_broadcaster = robot_camera.static_tag_broadcaster:main',
+            'pose_lookup_transform = robot_camera.pose_lookup_transform:main',
         ],
     },
 )
