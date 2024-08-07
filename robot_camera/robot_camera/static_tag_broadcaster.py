@@ -39,7 +39,7 @@ def main():
     
     # hard code a list of tags, should eventually be a parameter
     tag_list = []
-    tag_list.append([38, 1.0, 0.0, 0.23, 0.5, 0.5, -0.5, -0.5])
+    tag_list.append([38, 1.0, 0.0, 0.169, 0.5, 0.5, -0.5, -0.5])
     tag_list.append([37, -3.0, 0.0, 1.0, 0.5, 0.0, 0.0, 0.866025404])
     
     tag_frame_node.make_transform_frames(tag_list)

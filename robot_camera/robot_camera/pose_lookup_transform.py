@@ -3,6 +3,7 @@ from rclpy.node import Node
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from geometry_msgs.msg import TransformStamped
 #from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
 
@@ -19,30 +20,39 @@ class FrameListener(Node):
 
         # Call on_timer function every second
         self.timer = self.create_timer(1.0, self.on_timer)
-
-    def on_timer(self):
-        # Look up for the transformation between target_frame and source_frame
-        # and send pose for target tag
+        
+        # Store the static tag frame to map transform
         try:
-            t = self.tf_buffer.lookup_transform(
-                'tag36h11:38',
+            self.tag38_to_map = self.tf_buffer.lookup_transform(
                 'tag_frame_38',
+                'map',
                 rclpy.time.Time())
         except TransformException as ex:
-            self.get_logger().info('Could not transform tag_frame_38 to tag36h11:38')
+            self.get_logger().info('Could not transform tag_frame_38 to map')
+            self.tag38_to_map = TransformStamped()
+
+    def on_timer(self):
+        # Look up for the transformation between the measured tag frame and robot
+        try:
+            measured_tag38 = self.tf_buffer.lookup_transform(
+                'tag36h11:38',
+                'base_footprint',
+                rclpy.time.Time())
+        except TransformException as ex:
+            self.get_logger().info('Could not transform tag36h11:38 to base_footprint')
             return
 
-        msg = PoseStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "map"
-        msg.pose.position.x = t.transform.translation.x
-        msg.pose.position.y = t.transform.translation.y
-        msg.pose.position.z = t.transform.translation.z
-        msg.pose.orientation.w = t.transform.rotation.w
-        msg.pose.orientation.x = t.transform.rotation.x
-        msg.pose.orientation.y = t.transform.rotation.y
-        msg.pose.orientation.z = t.transform.rotation.z
-        self.pose_publisher.publish(msg)
+        # find the unknown map to base_footprint transform
+        robot_tag38 = measured_tag38 * self.tag38_to_map
+
+        robot_pose_msg = PoseStamped()
+        robot_pose_msg.header.stamp = self.get_clock().now().to_msg()
+        robot_pose_msg.header.frame_id = "map"
+        robot_pose_msg.pose.position.x = robot_tag38.transform.translation.x
+        robot_pose_msg.pose.position.y = robot_tag38.transform.translation.y
+        robot_pose_msg.pose.position.z = robot_tag38.transform.translation.z
+        robot_pose_msg.pose.orientation = robot_tag38.transform.rotation
+        self.pose_publisher.publish(robot_pose_msg)
 
 def main():
     rclpy.init()

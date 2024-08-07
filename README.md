@@ -32,3 +32,26 @@ open platform.txt in a hidden file:
 copy the platform_teensy.txt from the microros arduino repository into this  
 close the Arduino ide, then re-open it.  The sketch compiled  
 
+## ROS
+### micro sim
+
+### ros control
+
+### ros nav
+
+### ros camera
+#### usb_cam
+install the camera driver, there are many others, but this one worked
+sudo apt install ros-iron-usb-cam
+copy /opt/ros/iron/share/usb_cam/config/params_1.yaml 
+to local params folder and update the parameters
+especially change camera_info_url: "package://robot_camera/params/camera_info.yaml"
+so it points to the local copy of the camera_info.yaml file
+copy /opt/ros/iron/share/usb_cam/config/camera_info.yaml to the local directory
+this file will be recomuted when te camera is calibrated
+
+#### image_pipeline
+sudo apt install ros-iron-image-pipeline
+
+#### apriltags
+sudo apt install ros-iron-apriltag-ros
