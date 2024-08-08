@@ -10,7 +10,7 @@ def generate_launch_description():
 	ekf_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'ekf_imu_launch.py')
 	map_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'map_server_launch.py')
 	nav_launch = os.path.join(get_package_share_directory('robot_base'), 'launch', 'navigation_launch.py')
-	rviz2_file = os.path.join(get_package_share_directory('robot_base'), 'rviz', 'robot.rviz')
+	rviz2_file = os.path.join(get_package_share_directory('robot_base'), 'rviz', 'guy_robot.rviz')
 	
 	control_include = IncludeLaunchDescription(PythonLaunchDescriptionSource(control_launch))
 	ekf_include = IncludeLaunchDescription(PythonLaunchDescriptionSource(ekf_launch))
