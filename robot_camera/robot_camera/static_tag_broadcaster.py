@@ -39,8 +39,12 @@ def main():
     
     # hard code a list of tags, should eventually be a parameter
     tag_list = []
-    tag_list.append([38, 1.0, 0.0, 0.175, 0.5, 0.5, -0.5, -0.5])
-    tag_list.append([37, -3.0, 0.0, 1.0, 0.5, 0.0, 0.0, 0.866025404])
+    tag_list.append([33, -9.0, -3.5, 0.175, 0.5, 0.5, 0.5, 0.5])
+    tag_list.append([34, -8.0, -4.0, 0.175, 0.0, 0.0, 0.7071068, 0.7071068])
+    tag_list.append([35, 0.0, -4.0, 0.175, 0.0, 0.0, 0.7071068, 0.7071068])
+    tag_list.append([36, 1.0, -3.5, 0.175, 0.5, 0.5, -0.5, -0.5])
+    tag_list.append([37, 1.0, 0.0, 0.175, 0.5, 0.5, -0.5, -0.5])
+    tag_list.append([38, 0.0, 1.0, 0.175, 0.7071068, 0.7071068, 0.0, 0.0])
     
     tag_frame_node.make_transform_frames(tag_list)
 
