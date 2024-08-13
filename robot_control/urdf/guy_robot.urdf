@@ -280,7 +280,7 @@
 <!--   Base     -->
 
     <joint name="base_footprint_link" type="fixed">
-        <origin rpy="0 0 0" xyz="-0.065 0 0.146"/>
+        <origin rpy="0 0.04619 0" xyz="-0.065 0 0.146"/>
         <parent link="base_footprint"/>
         <child link="base_link"/>
     </joint>
