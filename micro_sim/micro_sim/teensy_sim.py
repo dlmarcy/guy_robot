@@ -49,13 +49,12 @@ class Teensy_Sim(Node):
 		self.setpoint_right = 0.0
 		self.setpoint_right_k1 = 0.0
 		self.setpoint_right_k2 = 0.0
-		self.setpoint_right_k2 = 0.0
+		self.setpoint_right_k3 = 0.0
 
 		# create timing variables for robot model timer
 		self.TIMER_PERIOD = 10e-3
 		self.TIMER_RATE = 1.0/self.TIMER_PERIOD
 		self.robot_model_timer = self.create_timer(self.TIMER_PERIOD, self.robot_model_timer_cb)
-		self.ticks = 0
 
 		# robot constants
 		self.TIRE_DIA = 0.152 # meter
